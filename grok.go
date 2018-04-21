@@ -34,7 +34,7 @@ type Grok struct {
 	rawPattern       map[string]string
 	config           *Config
 	aliases          map[string]string
-	compiledPatterns map[string]*gRegexp
+	compiledPatterns map[string]*GRegexp
 	patterns         map[string]*gPattern
 	patternsGuard    *sync.RWMutex
 	compiledGuard    *sync.RWMutex
@@ -45,7 +45,7 @@ type gPattern struct {
 	typeInfo   semanticTypes
 }
 
-type gRegexp struct {
+type GRegexp struct {
 	regexp   *regexp.Regexp
 	typeInfo semanticTypes
 }
@@ -63,7 +63,7 @@ func NewWithConfig(config *Config) (*Grok, error) {
 	g := &Grok{
 		config:           config,
 		aliases:          map[string]string{},
-		compiledPatterns: map[string]*gRegexp{},
+		compiledPatterns: map[string]*GRegexp{},
 		patterns:         map[string]*gPattern{},
 		rawPattern:       map[string]string{},
 		patternsGuard:    new(sync.RWMutex),
@@ -202,7 +202,7 @@ func (g *Grok) Match(pattern, text string) (bool, error) {
 }
 
 // compiledParse parses the specified text and returns a map with the results.
-func (g *Grok) compiledParse(gr *gRegexp, text string) (map[string]string, error) {
+func (g *Grok) compiledParse(gr *GRegexp, text string) (map[string]string, error) {
 	captures := make(map[string]string)
 	if match := gr.regexp.FindStringSubmatch(text); len(match) > 0 {
 		for i, name := range gr.regexp.SubexpNames() {
@@ -294,7 +294,7 @@ func (g *Grok) buildPatterns() error {
 	return g.addPatternsFromMap(g.rawPattern)
 }
 
-func (g *Grok) compile(pattern string) (*gRegexp, error) {
+func (g *Grok) compile(pattern string) (*GRegexp, error) {
 	g.compiledGuard.RLock()
 	gr, ok := g.compiledPatterns[pattern]
 	g.compiledGuard.RUnlock()
@@ -314,7 +314,7 @@ func (g *Grok) compile(pattern string) (*gRegexp, error) {
 	if err != nil {
 		return nil, err
 	}
-	gr = &gRegexp{regexp: compiledRegex, typeInfo: ti}
+	gr = &GRegexp{regexp: compiledRegex, typeInfo: ti}
 
 	g.compiledGuard.Lock()
 	g.compiledPatterns[pattern] = gr
