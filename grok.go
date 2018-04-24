@@ -46,7 +46,7 @@ type gPattern struct {
 }
 
 type GRegexp struct {
-	regexp   *regexp.Regexp
+	Regexp   *regexp.Regexp
 	typeInfo semanticTypes
 }
 
@@ -194,7 +194,7 @@ func (g *Grok) Match(pattern, text string) (bool, error) {
 		return false, err
 	}
 
-	if ok := gr.regexp.MatchString(text); !ok {
+	if ok := gr.Regexp.MatchString(text); !ok {
 		return false, nil
 	}
 
@@ -202,10 +202,10 @@ func (g *Grok) Match(pattern, text string) (bool, error) {
 }
 
 // CompiledParse parses the specified text and returns a map with the results.
-func (g *Grok) CompiledParse(gr *GRegexp, text string) (map[string]string, error) {
-	captures := make(map[string]string)
-	if match := gr.regexp.FindStringSubmatch(text); len(match) > 0 {
-		for i, name := range gr.regexp.SubexpNames() {
+func (g *Grok) CompiledParse(gr *GRegexp, text string) (map[string]interface{}, error) {
+	captures := make(map[string]interface{})
+	if match := gr.Regexp.FindStringSubmatch(text); len(match) > 0 {
+		for i, name := range gr.Regexp.SubexpNames() {
 			if name != "" {
 				if g.config.RemoveEmptyValues && match[i] == "" {
 					continue
@@ -220,7 +220,7 @@ func (g *Grok) CompiledParse(gr *GRegexp, text string) (map[string]string, error
 }
 
 // Parse the specified text and return a map with the results.
-func (g *Grok) Parse(pattern, text string) (map[string]string, error) {
+func (g *Grok) Parse(pattern, text string) (map[string]interface{}, error) {
 	gr, err := g.Compile(pattern)
 	if err != nil {
 		return nil, err
@@ -235,10 +235,10 @@ func (g *Grok) ParseTyped(pattern string, text string) (map[string]interface{}, 
 	if err != nil {
 		return nil, err
 	}
-	match := gr.regexp.FindStringSubmatch(text)
+	match := gr.Regexp.FindStringSubmatch(text)
 	captures := make(map[string]interface{})
 	if len(match) > 0 {
-		for i, segmentName := range gr.regexp.SubexpNames() {
+		for i, segmentName := range gr.Regexp.SubexpNames() {
 			if len(segmentName) != 0 {
 				if g.config.RemoveEmptyValues == true && match[i] == "" {
 					continue
@@ -274,8 +274,8 @@ func (g *Grok) ParseToMultiMap(pattern, text string) (map[string][]string, error
 	}
 
 	captures := make(map[string][]string)
-	if match := gr.regexp.FindStringSubmatch(text); len(match) > 0 {
-		for i, name := range gr.regexp.SubexpNames() {
+	if match := gr.Regexp.FindStringSubmatch(text); len(match) > 0 {
+		for i, name := range gr.Regexp.SubexpNames() {
 			if name != "" {
 				if g.config.RemoveEmptyValues == true && match[i] == "" {
 					continue
@@ -314,7 +314,7 @@ func (g *Grok) Compile(pattern string) (*GRegexp, error) {
 	if err != nil {
 		return nil, err
 	}
-	gr = &GRegexp{regexp: compiledRegex, typeInfo: ti}
+	gr = &GRegexp{Regexp: compiledRegex, typeInfo: ti}
 
 	g.compiledGuard.Lock()
 	g.compiledPatterns[pattern] = gr
@@ -390,7 +390,7 @@ func (g *Grok) nameToAlias(name string) string {
 
 // ParseStream will match the given pattern on a line by line basis from the reader
 // and apply the results to the process function
-func (g *Grok) ParseStream(reader *bufio.Reader, pattern string, process func(map[string]string) error) error {
+func (g *Grok) ParseStream(reader *bufio.Reader, pattern string, process func(map[string]interface{}) error) error {
 	gr, err := g.Compile(pattern)
 	if err != nil {
 		return err
